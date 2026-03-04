@@ -190,11 +190,12 @@
     <p class="tagline">Where thoughts come to breathe.</p>
     <p class="sub">A markdown-first note app for casual writers, developers, and product professionals. Everything stored as plain markdown — no lock-in.</p>
     <div class="cta-row">
-      <a id="primary-cta" href="https://github.com/radaiko/nook-app/releases/latest" class="btn-primary">
+      <a id="primary-cta" href="https://github.com/radaiko/nook-app/releases" class="btn-primary">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         <span id="cta-label">Download Nook</span>
       </a>
       <span id="version-badge" class="version-badge"></span>
+      <a id="prerelease-link" href="#" class="version-badge" style="display:none"></a>
     </div>
   </section>
 
@@ -279,7 +280,7 @@
 <script>
 (function () {
   var REPO = 'radaiko/nook-app';
-  var API = 'https://api.github.com/repos/' + REPO + '/releases/latest';
+  var API = 'https://api.github.com/repos/' + REPO + '/releases';
 
   function detectOS() {
     var ua = navigator.userAgent;
@@ -296,7 +297,7 @@
     return null;
   }
 
-  function populateDownloads(release) {
+  function populateDownloads(release, isPrimary) {
     var assets = release.assets;
     var version = release.tag_name.replace(/^v/, '');
 
@@ -317,7 +318,7 @@
     }
 
     var badge = document.getElementById('version-badge');
-    if (badge) badge.textContent = 'v' + version;
+    if (badge) badge.textContent = 'v' + version + (release.prerelease ? ' (pre-release)' : '');
 
     var os = detectOS();
     var primaryAsset = null;
@@ -346,12 +347,52 @@
     }
   }
 
+  function showPrerelease(release) {
+    var version = release.tag_name.replace(/^v/, '');
+    var link = document.getElementById('prerelease-link');
+    if (link) {
+      link.href = release.html_url;
+      link.textContent = 'Pre-release available: v' + version;
+      link.style.display = '';
+    }
+  }
+
   fetch(API)
     .then(function (r) {
       if (!r.ok) throw new Error(r.status);
       return r.json();
     })
-    .then(populateDownloads)
+    .then(function (releases) {
+      var stable = null;
+      var prerelease = null;
+
+      for (var i = 0; i < releases.length; i++) {
+        if (releases[i].draft) continue;
+        if (!releases[i].prerelease && !stable) stable = releases[i];
+        if (releases[i].prerelease && !prerelease) prerelease = releases[i];
+        if (stable && prerelease) break;
+      }
+
+      // Use the best available release for downloads:
+      // prefer stable, fall back to prerelease
+      var primary = stable || prerelease;
+      if (primary) populateDownloads(primary, true);
+
+      // If there's a prerelease newer than stable (or no stable yet), show it
+      if (prerelease && (!stable || releases.indexOf(prerelease) < releases.indexOf(stable))) {
+        if (stable) {
+          // Stable exists but prerelease is newer — show prerelease link
+          showPrerelease(prerelease);
+        } else {
+          // No stable yet, prerelease is primary — no extra link needed
+        }
+      }
+
+      if (!primary) {
+        var badge = document.getElementById('version-badge');
+        if (badge) badge.textContent = 'No releases yet';
+      }
+    })
     .catch(function () {
       var badge = document.getElementById('version-badge');
       if (badge) badge.textContent = 'No releases yet';
