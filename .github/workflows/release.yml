@@ -93,6 +93,6 @@ jobs:
           tagName: v${{ inputs.version }}
           releaseName: "Nook v${{ inputs.version }}"
           releaseBody: "Download Nook for your platform below."
-          draft: true
-          args: --target ${{ matrix.target }}
+          releaseDraft: true
+          args: --target ${{ matrix.target }} --bundles all
           tauriScript: pnpm tauri
