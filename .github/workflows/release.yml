@@ -131,16 +131,31 @@ jobs:
         if: matrix.velopack
         shell: bash
         run: |
-          PACK_DIR="$(mktemp -d)"
-          cp "src-tauri/target/${{ matrix.target }}/release/${{ matrix.main-exe }}" "$PACK_DIR/"
-          vpk pack \
-            --packId "$PACK_ID" \
-            --packTitle "Nook" \
-            --packVersion "${{ inputs.version }}" \
-            --packDir "$PACK_DIR" \
-            --mainExe "${{ matrix.main-exe }}" \
-            --outputDir "releases" \
-            ${{ runner.os == 'macOS' && '--signAppIdentity "Developer ID Application: Aiko Radlingmayr (555V4MNLK3)" --signInstallIdentity "Developer ID Installer: Aiko Radlingmayr (555V4MNLK3)" --notaryProfile "notary-profile"' || '' }}
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            # Pass the full Tauri .app bundle so Velopack uses it directly
+            # (preserves Info.plist, entitlements, icons, and embedded web assets)
+            APP_PATH="src-tauri/target/${{ matrix.target }}/release/bundle/macos/Nook.app"
+            vpk pack \
+              --packId "$PACK_ID" \
+              --packTitle "Nook" \
+              --packVersion "${{ inputs.version }}" \
+              --packDir "$APP_PATH" \
+              --mainExe "${{ matrix.main-exe }}" \
+              --outputDir "releases" \
+              --signAppIdentity "Developer ID Application: Aiko Radlingmayr (555V4MNLK3)" \
+              --signInstallIdentity "Developer ID Installer: Aiko Radlingmayr (555V4MNLK3)" \
+              --notaryProfile "notary-profile"
+          else
+            PACK_DIR="$(mktemp -d)"
+            cp "src-tauri/target/${{ matrix.target }}/release/${{ matrix.main-exe }}" "$PACK_DIR/"
+            vpk pack \
+              --packId "$PACK_ID" \
+              --packTitle "Nook" \
+              --packVersion "${{ inputs.version }}" \
+              --packDir "$PACK_DIR" \
+              --mainExe "${{ matrix.main-exe }}" \
+              --outputDir "releases"
+          fi
 
       - name: Upload Velopack assets to release
         if: matrix.velopack
