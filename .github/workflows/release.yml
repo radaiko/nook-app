@@ -20,15 +20,19 @@ jobs:
           - runner: macos-latest
             target: aarch64-apple-darwin
             main-exe: nook
+            velopack: true
           - runner: macos-latest
             target: x86_64-apple-darwin
             main-exe: nook
+            velopack: false
           - runner: windows-latest
             target: x86_64-pc-windows-msvc
             main-exe: nook.exe
+            velopack: true
           - runner: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
             main-exe: nook
+            velopack: true
 
     runs-on: ${{ matrix.runner }}
 
@@ -114,14 +118,17 @@ jobs:
           tauriScript: pnpm tauri
 
       - name: Setup .NET
+        if: matrix.velopack
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
 
       - name: Install vpk
+        if: matrix.velopack
         run: dotnet tool install -g vpk
 
       - name: Package with Velopack
+        if: matrix.velopack
         shell: bash
         run: |
           PACK_DIR="$(mktemp -d)"
@@ -136,6 +143,7 @@ jobs:
             ${{ runner.os == 'macOS' && '--signAppIdentity "Developer ID Application: Aiko Radlingmayr (555V4MNLK3)" --signInstallIdentity "Developer ID Installer: Aiko Radlingmayr (555V4MNLK3)" --notaryProfile "notary-profile"' || '' }}
 
       - name: Upload Velopack assets to release
+        if: matrix.velopack
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

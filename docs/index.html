@@ -202,28 +202,22 @@
   <section class="downloads container">
     <h2>All Downloads</h2>
     <div class="dl-grid" id="dl-grid">
-      <div class="dl-card" data-platform="macos-arm">
+      <div class="dl-card" data-platform="macos">
         <div class="os-icon">🍎</div>
         <div class="os-name">macOS</div>
-        <div class="os-detail">Apple Silicon</div>
-        <a class="dl-btn unavailable" id="dl-macos-arm" href="#">.dmg</a>
-      </div>
-      <div class="dl-card" data-platform="macos-intel">
-        <div class="os-icon">🍎</div>
-        <div class="os-name">macOS</div>
-        <div class="os-detail">Intel</div>
-        <a class="dl-btn unavailable" id="dl-macos-intel" href="#">.dmg</a>
+        <div class="os-detail">Apple Silicon (auto-update)</div>
+        <a class="dl-btn unavailable" id="dl-macos" href="#">.pkg</a>
       </div>
       <div class="dl-card" data-platform="windows">
         <div class="os-icon">🪟</div>
         <div class="os-name">Windows</div>
-        <div class="os-detail">x64</div>
-        <a class="dl-btn unavailable" id="dl-windows" href="#">.msi</a>
+        <div class="os-detail">x64 (auto-update)</div>
+        <a class="dl-btn unavailable" id="dl-windows" href="#">.exe</a>
       </div>
       <div class="dl-card" data-platform="linux">
         <div class="os-icon">🐧</div>
         <div class="os-name">Linux</div>
-        <div class="os-detail">x64</div>
+        <div class="os-detail">x64 (auto-update)</div>
         <a class="dl-btn unavailable" id="dl-linux" href="#">.AppImage</a>
       </div>
     </div>
@@ -301,11 +295,11 @@
     var assets = release.assets;
     var version = release.tag_name.replace(/^v/, '');
 
+    // Use Velopack installers (auto-update capable)
     var map = {
-      'dl-macos-arm':   findAsset(assets, /\.dmg.*aarch64|aarch64.*\.dmg/),
-      'dl-macos-intel': findAsset(assets, /\.dmg.*x64|x64.*\.dmg/),
-      'dl-windows':     findAsset(assets, /\.msi$/),
-      'dl-linux':       findAsset(assets, /\.AppImage$/),
+      'dl-macos':   findAsset(assets, /osx-Setup\.pkg$/),
+      'dl-windows': findAsset(assets, /win-Setup\.exe$/),
+      'dl-linux':   findAsset(assets, /com\.nook\.desktop\.AppImage$/),
     };
 
     for (var id in map) {
@@ -325,7 +319,7 @@
     var primaryLabel = 'Download Nook';
 
     if (os === 'macos') {
-      primaryAsset = map['dl-macos-arm'] || map['dl-macos-intel'];
+      primaryAsset = map['dl-macos'];
       primaryLabel = 'Download for macOS';
     } else if (os === 'windows') {
       primaryAsset = map['dl-windows'];
@@ -341,8 +335,7 @@
     if (ctaLabel) ctaLabel.textContent = primaryLabel;
 
     if (os) {
-      var platformMap = { macos: 'macos-arm', windows: 'windows', linux: 'linux' };
-      var card = document.querySelector('[data-platform="' + platformMap[os] + '"]');
+      var card = document.querySelector('[data-platform="' + os + '"]');
       if (card) card.classList.add('detected');
     }
   }
